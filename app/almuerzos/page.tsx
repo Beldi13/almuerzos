@@ -191,7 +191,12 @@ export default function Home() {
 
         <div className="bg-white dark:bg-gray-900 shadow rounded p-4 w-full lg:w-2/4  dark:text-white">
           <h2 className="font-semibold mb-4">Formulario</h2>
-          {menu ? (
+          {loading ? (
+            <div className="flex flex-col justify-center items-center text-gray-500 h-full text-center animate-pulse">
+              <span className="text-5xl">⏳</span>
+              <p className="text-lg mt-2 font-medium">Cargando menú...</p>
+            </div>
+          ) : menu ? (
             <div className="space-y-4 ">
               <div className="space-y-2">
                 {["sopa", "opcion1", "opcion2", "completo1", "completo2"].map((op) => (
