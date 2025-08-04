@@ -7,10 +7,17 @@ import HistorialPedidos from "@/components/HistorialPedidos";
 import Navbar from "@/components/NavBar";
 import { useRouter } from "next/navigation";
 
+type Menu = {
+  fecha: string;
+  sopa: string;
+  opcion1: string;
+  opcion2: string;
+};
+
 
 export default function Home() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>("");
-  const [menu, setMenu] = useState<any | null>(null);
+  const [menu, setMenu] = useState<Menu | null>(null);
   const [loading, setLoading] = useState(false);
   const [pedido, setPedido] = useState("");
   const [extra, setExtra] = useState(false);
