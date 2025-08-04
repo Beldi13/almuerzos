@@ -7,6 +7,8 @@ import HistorialPedidos from "@/components/HistorialPedidos";
 import Navbar from "@/components/NavBar";
 import { useRouter } from "next/navigation";
 
+// ... imports ...
+
 type Menu = {
   fecha: string;
   sopa: string;
@@ -14,6 +16,13 @@ type Menu = {
   opcion2: string;
 };
 
+type Pedido = {
+  id: number;
+  fecha: string;
+  tipo_pedido: string;
+  extra: boolean;
+  observacion: string | null;
+};
 
 export default function Home() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string>("");
@@ -23,22 +32,53 @@ export default function Home() {
   const [extra, setExtra] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [observacion, setObservacion] = useState("");
-
   const supabase = createClient();
-
   const router = useRouter();
-
+  const [pedidosUsuario, setPedidosUsuario] = useState<Pedido[]>([]);
 
   useEffect(() => {
-  const verificarSesion = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.push("/auth/login");
-    }
-  };
+    const verificarSesion = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/auth/login");
+      }
+    };
 
-  verificarSesion();
-}, []);
+    verificarSesion();
+  }, []);
+
+  useEffect(() => {
+    const fetchPedidosUsuario = async () => {
+      if (!fechaSeleccionada) return;
+
+      const supabase = createClient();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user?.id) {
+        console.error("❌ Error al obtener usuario:", userError);
+        return;
+      }
+
+      const userId = userData.user.id;
+
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("usuario_id", userId)
+        .eq("fecha", fechaSeleccionada)
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("❌ Error al consultar pedidos:", error.message);
+        setPedidosUsuario([]);
+      } else {
+        setPedidosUsuario(data);
+      }
+    };
+
+    fetchPedidosUsuario();
+  }, [fechaSeleccionada]);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -49,7 +89,7 @@ export default function Home() {
         .from("menu")
         .select("*")
         .eq("fecha", fechaSeleccionada)
-        .single();
+        .maybeSingle();
 
       setMenu(error ? null : data);
       setLoading(false);
@@ -86,50 +126,72 @@ export default function Home() {
     }
   };
 
+  function describirPedido(tipo: string, menu: Menu | null): string {
+    if (!menu) return tipo;
+    switch (tipo) {
+      case "sopa":
+        return "Solo sopa";
+      case "opcion1":
+        return `Solo segundo: ${menu.opcion1}`;
+      case "opcion2":
+        return `Solo segundo: ${menu.opcion2}`;
+      case "completo1":
+        return `Completo Opción 1 (sopa + ${menu.opcion1})`;
+      case "completo2":
+        return `Completo Opción 2 (sopa + ${menu.opcion2})`;
+      default:
+        return tipo;
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Navbar */}
       <div className="col-span-4 lg:col-span-4">
         <Navbar />
       </div>
 
-      {/* Main Grid */}
       <main className="flex flex-col lg:flex-row flex-1 p-4 gap-4 bg-gray-100 dark:bg-gray-800">
-        {/* Columna Izquierda: Calendario + Menú */}
         <div className="flex flex-col gap-4 w-full lg:w-1/4">
           <section className="bg-white dark:bg-gray-900 shadow rounded p-4 flex-1 text-gray-800 dark:text-white">
             <h2 className="font-semibold mb-2">Calendario</h2>
             <FechaSelector onDateChange={setFechaSeleccionada} />
           </section>
           <section className="bg-white dark:bg-gray-900 shadow rounded p-4 flex-1 text-gray-800 dark:text-white">
-            <h2 className="font-semibold mb-2 ">Menú de comida</h2>
-            {loading ? (
-              <p className="">Cargando menú...</p>
-            ) : !menu ? (
-              <p className="">No hay menú cargado para esta fecha.</p>
+            <h2 className="font-semibold mb-2">Mis pedidos del día</h2>
+            {fechaSeleccionada === "" ? (
+              <p>Selecciona una fecha</p>
+            ) : pedidosUsuario.length === 0 ? (
+              <p>No has realizado pedidos en esta fecha.</p>
             ) : (
-              <div className="space-y-2 ">
-                <p>
-                  <strong>Fecha:</strong> {menu.fecha}
-                </p>
-                <p>
-                  <strong>Sopa:</strong> {menu.sopa}
-                </p>
-                <p>
-                  <strong>Opción 1:</strong> {menu.opcion1}
-                </p>
-                <p>
-                  <strong>Opción 2:</strong> {menu.opcion2}
-                </p>
-              </div>
+              <ul className="space-y-2">
+                {pedidosUsuario.map((p) => (
+                  <li key={p.id} className="border rounded p-2 bg-gray-50 dark:bg-gray-800">
+                    <p>
+                      <strong>Fecha:</strong> {p.fecha}
+                    </p>
+                    <p>
+                      <strong>Pedido:</strong> {describirPedido(p.tipo_pedido, menu)}
+                    </p>
+                    {p.extra && (
+                      <p>
+                        <strong>Porción extra:</strong> Sí
+                      </p>
+                    )}
+                    {p.observacion && (
+                      <p>
+                        <strong>Observación:</strong> {p.observacion}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
         </div>
 
-        {/* Columna Centro: Formulario */}
         <div className="bg-white dark:bg-gray-900 shadow rounded p-4 w-full lg:w-2/4  dark:text-white">
           <h2 className="font-semibold mb-4">Formulario</h2>
-          {menu && (
+          {menu ? (
             <div className="space-y-4 ">
               <div className="space-y-2">
                 {["sopa", "opcion1", "opcion2", "completo1", "completo2"].map((op) => (
@@ -179,12 +241,16 @@ export default function Home() {
 
               {mensaje && <p className="mt-2 text-sm text-green-600 font-medium">{mensaje}</p>}
             </div>
+          ) : (
+            <div className="flex flex-col justify-center items-center text-gray-500 h-full text-center">
+              <span className="text-5xl">🍽️</span>
+              <p className="text-lg mt-2 font-medium">No hay menú disponible para esta fecha</p>
+              <p className="text-sm mt-1">Intenta con otro día o vuelve más tarde.</p>
+            </div>
           )}
         </div>
 
-        {/* Columna Derecha: Historial */}
         <div className="bg-white dark:bg-gray-900 shadow rounded p-4 w-full lg:w-1/4 text-gray-900 dark:text-white h-auto lg:max-h-[100vh]">
-          {" "}
           <h2 className="font-semibold mb-2">Historial de pedidos</h2>
           <HistorialPedidos />
         </div>

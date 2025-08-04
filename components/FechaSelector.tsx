@@ -28,6 +28,7 @@ export default function FechaSelector({ onDateChange }: Props) {
         captionLayout="dropdown"
         navLayout="around"
         mode="single"
+        disabled={{ before: new Date() }}
         selected={selected}
         onSelect={setSelected}
         footer={selected ? <p className="mt-2">Seleccionado: {format(selected, "PPP")}</p> : null}
