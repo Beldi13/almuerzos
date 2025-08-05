@@ -97,9 +97,9 @@ export default function HistorialPedidos() {
       case "opcion2":
         return `Solo segundo: ${menu.opcion2}`;
       case "completo1":
-        return `Completo Opción 1 (sopa + ${menu.opcion1})`;
+        return `Completo Opción 1 (${menu.sopa} + ${menu.opcion1})`;
       case "completo2":
-        return `Completo Opción 2 (sopa + ${menu.opcion2})`;
+        return `Completo Opción 2 (${menu.sopa} + ${menu.opcion2})`;
       default:
         return pedido.tipo_pedido;
     }

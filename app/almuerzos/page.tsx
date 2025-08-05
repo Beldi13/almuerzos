@@ -130,15 +130,15 @@ export default function Home() {
     if (!menu) return tipo;
     switch (tipo) {
       case "sopa":
-        return "Solo sopa";
+        return `Sopa: ${menu.sopa}`;
       case "opcion1":
         return `Solo segundo: ${menu.opcion1}`;
       case "opcion2":
         return `Solo segundo: ${menu.opcion2}`;
       case "completo1":
-        return `Completo Opción 1 (sopa + ${menu.opcion1})`;
+        return `Completo Opción 1 (${menu.sopa} + ${menu.opcion1})`;
       case "completo2":
-        return `Completo Opción 2 (sopa + ${menu.opcion2})`;
+        return `Completo Opción 2 (${menu.sopa} + ${menu.opcion2})`;
       default:
         return tipo;
     }
@@ -212,7 +212,7 @@ export default function Home() {
                     {op === "completo2" && `Completo Opción 2 (sopa + ${menu.opcion2})`}
                     {op === "opcion1" && `Solo segundo: ${menu.opcion1}`}
                     {op === "opcion2" && `Solo segundo: ${menu.opcion2}`}
-                    {op === "sopa" && `Solo sopa`}
+                    {op === "sopa" && `Sopa: ${menu.sopa}`}
                   </label>
                 ))}
               </div>
